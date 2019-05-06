@@ -55,6 +55,22 @@ const UserSchema  = new mongoose.Schema({
     }
 });
 
+UserSchema.methods.newAuthToken = async function(){
+    const user  = this
+    const token =  jwt.sign({ _id: user.id.toString() },'thisismynewblog', {expiresIn: "7 days"})
+    user.tokens = user.tokens.concat({ token })
+    await user.save()
+    return token
+}
+
+
+UserSchema.pre('save', async function(next){
+    const user = this
+    if(user.isModified('password')){
+        user.password = await bcrypt.hash(user.password, 8)
+    }
+    next()
+})
 const User = mongoose.model('User', UserSchema);
 
 module.exports = User;
